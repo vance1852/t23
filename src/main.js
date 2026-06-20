@@ -39,6 +39,7 @@ class DashboardApp {
     this._initHeatmap();
     this._updateStats();
     this._updateAbnormalList();
+    this._updateOfflineList();
   }
 
   _initScene() {
@@ -128,13 +129,20 @@ class DashboardApp {
       this._exportAbnormalList();
     });
 
-    document.getElementById("abnormal-list").addEventListener("click", (e) => {
+    const handleListClick = (e) => {
       const item = e.target.closest(".abnormal-item");
       if (item) {
         const sensorId = item.dataset.sensorId;
         this._focusOnSensor(sensorId);
       }
-    });
+    };
+
+    document
+      .getElementById("abnormal-list")
+      .addEventListener("click", handleListClick);
+    document
+      .getElementById("offline-list")
+      .addEventListener("click", handleListClick);
   }
 
   _initHeatmap() {
@@ -253,6 +261,7 @@ class DashboardApp {
 
     this._updateStats();
     this._updateAbnormalList();
+    this._updateOfflineList();
   }
 
   _updateStats() {
@@ -291,22 +300,16 @@ class DashboardApp {
       maxHumidity + (onlineSensors.length > 0 ? "%" : "");
   }
 
-  _updateAbnormalList() {
-    const list = document.getElementById("abnormal-list");
+  _renderSensorList(listId, sensors, titleEmpty) {
+    const list = document.getElementById(listId);
     list.innerHTML = "";
 
-    const abnormalSensors = this.filteredSensors.filter((s) => {
-      const status = getStatusFromReading(s);
-      return status !== "normal";
-    });
-
-    if (abnormalSensors.length === 0) {
-      list.innerHTML =
-        '<div style="color:#64748b;font-size:12px;padding:10px;text-align:center;">暂无异常</div>';
+    if (sensors.length === 0) {
+      list.innerHTML = `<div style="color:#64748b;font-size:12px;padding:10px;text-align:center;">${titleEmpty}</div>`;
       return;
     }
 
-    abnormalSensors.forEach((sensor) => {
+    sensors.forEach((sensor) => {
       const status = getStatusFromReading(sensor);
       const statusClass = `status-${status.replace("_", "-")}`;
       const statusLabel = CONFIG.statusLabels[status];
@@ -331,6 +334,22 @@ class DashboardApp {
       `;
       list.appendChild(item);
     });
+  }
+
+  _updateAbnormalList() {
+    const abnormalSensors = this.filteredSensors.filter((s) => {
+      const status = getStatusFromReading(s);
+      return status !== "normal" && status !== "offline";
+    });
+    this._renderSensorList("abnormal-list", abnormalSensors, "暂无异常");
+  }
+
+  _updateOfflineList() {
+    const offlineSensors = this.filteredSensors.filter((s) => {
+      const status = getStatusFromReading(s);
+      return status === "offline";
+    });
+    this._renderSensorList("offline-list", offlineSensors, "无离线设备");
   }
 
   _showSensorDetail(sensor) {

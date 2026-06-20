@@ -302,6 +302,10 @@ export class ColdStorageScene {
       return CONFIG.statusColors.offline;
     }
 
+    if (status !== "normal") {
+      return CONFIG.statusColors[status];
+    }
+
     switch (this.colorMode) {
       case "temperature":
         return getTemperatureColor(
