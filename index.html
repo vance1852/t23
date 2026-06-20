@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>冷库 3D 温湿度监控看板</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- 顶部工具栏 -->
+      <header class="top-bar">
+        <div class="logo">
+          <span class="logo-icon">❄️</span>
+          <span class="logo-text">冷库温湿度监控中心</span>
+        </div>
+        <div class="color-mode-switch">
+          <span class="switch-label">着色模式：</span>
+          <button class="mode-btn active" data-mode="temperature">
+            按温度
+          </button>
+          <button class="mode-btn" data-mode="humidity">按湿度</button>
+          <button class="mode-btn" data-mode="battery">按电量</button>
+        </div>
+        <div class="stats-bar">
+          <div class="stat-item">
+            <span class="stat-label">总点位</span>
+            <span class="stat-value" id="stat-total">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">异常</span>
+            <span class="stat-value stat-warn" id="stat-abnormal">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">离线</span>
+            <span class="stat-value stat-offline" id="stat-offline">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">平均温度</span>
+            <span class="stat-value" id="stat-avg-temp">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">最高湿度</span>
+            <span class="stat-value" id="stat-max-humidity">--</span>
+          </div>
+          <button class="export-btn" id="export-btn">导出异常清单</button>
+        </div>
+      </header>
+
+      <!-- 主体区域 -->
+      <main class="main-container">
+        <!-- 左侧过滤面板 -->
+        <aside class="left-panel">
+          <div class="panel-section">
+            <h3 class="panel-title">状态筛选</h3>
+            <div class="filter-group" id="filter-status">
+              <label class="filter-item">
+                <input type="checkbox" value="normal" checked />
+                <span class="status-dot status-normal"></span>
+                <span>正常</span>
+              </label>
+              <label class="filter-item">
+                <input type="checkbox" value="too_cold" checked />
+                <span class="status-dot status-too-cold"></span>
+                <span>偏冷</span>
+              </label>
+              <label class="filter-item">
+                <input type="checkbox" value="too_hot" checked />
+                <span class="status-dot status-too-hot"></span>
+                <span>偏热</span>
+              </label>
+              <label class="filter-item">
+                <input type="checkbox" value="humidity_high" checked />
+                <span class="status-dot status-humidity-high"></span>
+                <span>湿度偏高</span>
+              </label>
+              <label class="filter-item">
+                <input type="checkbox" value="offline" checked />
+                <span class="status-dot status-offline"></span>
+                <span>离线</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <h3 class="panel-title">货品类型</h3>
+            <div class="filter-group" id="filter-product"></div>
+          </div>
+
+          <div class="panel-section">
+            <h3 class="panel-title">货架排号</h3>
+            <div class="filter-group" id="filter-rack"></div>
+          </div>
+
+          <div class="panel-section">
+            <h3 class="panel-title">异常点位列表</h3>
+            <div class="abnormal-list" id="abnormal-list"></div>
+          </div>
+        </aside>
+
+        <!-- 中间 3D 区域 -->
+        <section class="canvas-container">
+          <canvas id="three-canvas"></canvas>
+          <!-- 俯视热区小图 -->
+          <div class="heatmap-overlay">
+            <div class="heatmap-title">俯视热区图</div>
+            <div class="heatmap-grid" id="heatmap-grid"></div>
+            <div class="heatmap-legend">
+              <span>低</span>
+              <div class="legend-bar"></div>
+              <span>高</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 右侧详情面板 -->
+        <aside class="right-panel" id="right-panel">
+          <div class="panel-empty" id="panel-empty">
+            <p>点击传感器点位查看详情</p>
+          </div>
+          <div class="panel-content" id="panel-content" style="display: none">
+            <h3 class="panel-title" id="detail-title">传感器详情</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">设备编号</span>
+                <span class="detail-value" id="detail-id">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">状态</span>
+                <span class="detail-value" id="detail-status">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">货架</span>
+                <span class="detail-value" id="detail-rack">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">货位</span>
+                <span class="detail-value" id="detail-slot">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">层高</span>
+                <span class="detail-value" id="detail-level">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">货品类型</span>
+                <span class="detail-value" id="detail-product">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">当前温度</span>
+                <span class="detail-value" id="detail-temp">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">设定温区</span>
+                <span class="detail-value" id="detail-temp-range">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">当前湿度</span>
+                <span class="detail-value" id="detail-humidity">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">电量</span>
+                <span class="detail-value" id="detail-battery">-</span>
+              </div>
+              <div class="detail-item detail-full">
+                <span class="detail-label">最后上报时间</span>
+                <span class="detail-value" id="detail-last-report">-</span>
+              </div>
+            </div>
+            <div class="chart-container">
+              <h4 class="chart-title">最近 6 次读数</h4>
+              <canvas id="detail-chart"></canvas>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

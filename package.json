@@ -1,0 +1,18 @@
+{
+  "name": "cold-storage-3d-dashboard",
+  "version": "1.0.0",
+  "description": "冷库 3D 可视化温湿度监控看板",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.160.0",
+    "chart.js": "^4.4.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
